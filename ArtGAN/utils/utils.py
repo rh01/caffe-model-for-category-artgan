@@ -12,6 +12,17 @@ class OneHot(object):
         self.output[:] = self.be.onehot(t, axis=0)
         return self.output
 
+from PIL import Image
+
+
+def is_valid_image(filename):
+    valid = True
+    try:
+        Image.open(filename).load()
+    except OSError:
+        valid = False
+    return valid
+
 
 def image_reshape(img, shape, dtype=np.float32, data_format='NCHW', input_format='sigmoid'):
     if data_format is 'NCHW':

@@ -1,13 +1,14 @@
 import tensorflow as tf
-from layers import conv2d, linear, flatten, nnupsampling, batchnorm, gaussnoise, pool
-from activations import lrelu
-from op import log_sum_exp
-from data_loader import train_loader, validation_loader
+from nn.layers import conv2d, linear, flatten, nnupsampling, batchnorm, gaussnoise, pool
+from nn.activations import lrelu
+from nn.op import log_sum_exp
+from data.data_loader import train_loader, validation_loader
 from neon.backends import gen_backend
 import numpy as np
 from utils import drawblock, createfolders, OneHot, image_reshape
 from scipy.misc import imsave
 import os
+
 
 
 # Create folders to store images
@@ -18,7 +19,7 @@ if not os.path.exists(dir_name):
     os.mkdir(dir_name)
 
 # Parameters
-init_iter, max_iter = 0, 50000
+init_iter, max_iter = 0, 5000
 display_iter = 100
 eval_iter = 100
 store_img_iter = 100
@@ -35,9 +36,9 @@ tf.set_random_seed(1234)
 
 # DataLoader
 be = gen_backend(backend='cpu', batch_size=batch_size, datatype=np.float32)
-root_files = './dataset/wikiart'
-manifestfile = os.path.join(root_files, 'artist-train-index.csv')
-testmanifest = os.path.join(root_files, 'artist-val-index.csv')
+root_files = '/opt/shh/dataset/wikiart/'
+manifestfile = os.path.join(root_files, 'artist-train-index.tsv')
+testmanifest = os.path.join(root_files, 'artist-val-index.tsv')
 train = train_loader(manifestfile, root_files, be, h=im_size[0], w=im_size[1])
 test = validation_loader(testmanifest, root_files, be, h=im_size[0], w=im_size[1], ncls=n_classes)
 OneHot = OneHot(be, n_classes)
@@ -204,15 +205,29 @@ with tf.Session(config=config) as sess:
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
     for i_iter in range(init_iter, max_iter):
+        train.reset()
         # Control lr
         if i_iter < 30000:
             lr = lr_init
         else:
             lr = lr_init / 10.
         # Fetch minibatch
-        batch_x, batch_y = train.next()
-        batch_x = image_reshape(batch_x.get(), im_size, input_format='tanh')
-        batch_y = OneHot.transform(batch_y).get().transpose()
+        try:
+            batch_x, batch_y = train.next()
+        except StopIteration:
+            train.reset()
+            
+        #print "*****************debug1***********************"
+        #print help(batch_x)
+        #print dir(batch_x)
+        #print(batch_x)
+        #print(batch_x[0])
+        #print(batch_y[0])
+        #print(batch_y[1])
+        #print type(batch_y[1])
+        #print "*****************debug1***********************"
+        batch_x = image_reshape(batch_x[1], im_size, input_format='tanh')
+        batch_y = OneHot.transform(batch_y[1]).get().transpose()
         # update discriminator
         _, lossDn, lossOn, lossFake = sess.run([d_optimizer, cost_Dn, cost_On, cost_Dg_fake], feed_dict={
             x_n: batch_x, y: batch_y,

@@ -1,8 +1,8 @@
 import tensorflow as tf
-from layers import conv2d, linear, flatten, nnupsampling, batchnorm, gaussnoise, pool
-from activations import lrelu
-from op import log_sum_exp
-from data_loader import train_loader, validation_loader
+from nn.layers import conv2d, linear, flatten, nnupsampling, batchnorm, gaussnoise, pool
+from nn.activations import lrelu
+from nn.op import log_sum_exp
+from data.data_loader import train_loader, validation_loader
 from neon.backends import gen_backend
 import numpy as np
 from utils import drawblock, createfolders, OneHot, image_reshape
@@ -35,7 +35,7 @@ tf.set_random_seed(1234)
 
 # DataLoader
 be = gen_backend(backend='cpu', batch_size=batch_size, datatype=np.float32)
-root_files = './dataset/wikiart'
+root_files = '/opt/shh/dataset/wikiart'
 manifestfile = os.path.join(root_files, 'genre-train-index.csv')
 testmanifest = os.path.join(root_files, 'genre-val-index.csv')
 train = train_loader(manifestfile, root_files, be, h=im_size[0], w=im_size[1])
